@@ -7,7 +7,3 @@ __pycache__/
 /N/
 /F/
 /S/
-
-# CHB-MIT (baixar da PhysioNet, ver README)
-/chb-mit/chb*/
-*.edf

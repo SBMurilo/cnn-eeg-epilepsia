@@ -2,5 +2,4 @@ torch
 numpy
 matplotlib
 scikit-learn
-mne
 notebook

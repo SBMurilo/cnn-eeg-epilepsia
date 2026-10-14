@@ -1,11 +1,8 @@
 # CNN 1D para classificação de EEG (epilepsia)
 
-Estudo de redes neurais convolucionais 1D em PyTorch para classificar sinais de EEG de duas bases públicas:
+Estudo de redes neurais convolucionais 1D em PyTorch para classificar sinais de EEG do **dataset de Bonn** (saudável, interictal e crise epiléptica), com evolução em 15 notebooks e, no final, **quantização INT8 e exportação dos pesos para FPGA** (arquivos `.mif` e pacote VHDL).
 
-- **Dataset de Bonn** (raiz do repositório): saudável, interictal e crise epiléptica, com evolução em 15 notebooks e, no final, **quantização INT8 e exportação dos pesos para FPGA** (arquivos `.mif` e pacote VHDL).
-- **CHB-MIT** (pasta `chb-mit/`): EEG de 23 canais de pacientes pediátricos, avaliado em **paciente nunca visto** no treino.
-
-## Bonn: dataset
+## Dataset
 
 [Dataset de Bonn](https://www.ukbonn.de/epileptologie/arbeitsgruppen/ag-lehnertz-neurophysik/downloads/) (Andrzejak et al., 2001): 5 conjuntos de 100 segmentos de EEG de canal único, com 4097 amostras a 173,61 Hz (23,6 s) cada.
 
@@ -19,7 +16,7 @@ Estudo de redes neurais convolucionais 1D em PyTorch para classificar sinais de 
 
 Os dados **não estão neste repositório**. Baixe no site acima e coloque as pastas `Z`, `O`, `N`, `F` e `S` na mesma pasta dos notebooks.
 
-## Bonn: resultados
+## Resultados
 
 Acurácia no conjunto de teste (20% das janelas), conforme as saídas salvas em cada notebook.
 
@@ -43,7 +40,7 @@ Acurácia no conjunto de teste (20% das janelas), conforme as saídas salvas em 
 
 A cascata (notebook 13) usa uma primeira etapa que separa a categoria ampla (98,27% de acerto) e modelos especializados nas folhas; a tabela mostra a acurácia final nas 5 classes.
 
-## Bonn: quantização e FPGA
+## Quantização e FPGA
 
 O notebook `15_cnn_eeg_bonn_quantizado_INT8_export.ipynb`:
 
@@ -53,26 +50,6 @@ O notebook `15_cnn_eeg_bonn_quantizado_INT8_export.ipynb`:
 
 Arquitetura: 3 camadas convolucionais 1D (32, 64 e 128 canais; kernels 21, 11 e 7; max pooling 2) seguidas de 2 camadas lineares (64 neurônios e 3 classes).
 
-## CHB-MIT: avaliação em paciente nunca visto
-
-Pasta `chb-mit/`. Base [CHB-MIT Scalp EEG Database](https://physionet.org/content/chbmit/1.0.0/) (PhysioNet; Shoeb, 2009): registros contínuos de EEG em formato EDF, 23 canais a 256 Hz, com marcação do início e fim de cada crise. Os dados **não estão no repositório**: baixe da PhysioNet e coloque as pastas `chbXX` dentro de `chb-mit/`.
-
-Pipeline dos notebooks:
-
-1. Leitura dos arquivos EDF com MNE e das marcações de crise nos arquivos `-summary.txt`.
-2. Extração de janelas de 2 s (512 amostras × 23 canais): todas as janelas de crise e até 50 janelas normais por arquivo, com margem de 10 s ao redor de cada crise.
-3. **Divisão por paciente**: treino com vários pacientes e teste em um paciente que a rede nunca viu (`chb08`).
-4. CNN 1D multicanal (3 camadas convolucionais + 2 lineares, 290.146 parâmetros), 50 épocas.
-
-| Notebook | Treino | Variação | Acurácia no teste (chb08) | Recall de crise | Precisão de crise |
-|----------|--------|----------|--------------------------:|----------------:|------------------:|
-| 01 | chb01–07 (3.318 janelas) | dropout 0,2 | 61,68% | 35% | 94% |
-| 02 | chb01–03, 05–07 (3.268 janelas) | data augmentation + dropout 0,5 | 57,23% | 27% | 93% |
-
-O conjunto de teste tem 809 janelas (350 normais e 459 de crise). Nos dois casos a acurácia de treino chega a ~100%, mas no paciente novo a rede acerta quase todas as janelas normais (recall de 97%) e **perde a maior parte das crises**.
-
-Leitura dos resultados: o desempenho de 97% a 99% obtido em Bonn não se repete quando o teste é feito em outro paciente. Há forte sobreajuste ao treino e grande variabilidade entre pacientes, o que torna a divisão por paciente a avaliação mais realista.
-
 ## Como executar
 
 ```bash
@@ -80,14 +57,18 @@ pip install -r requirements.txt
 jupyter notebook
 ```
 
-Os notebooks são independentes e numerados pela ordem dos experimentos. Os arquivos `modelo_*.pth` são usados pela cascata (notebook 13). Os notebooks de `chb-mit/` devem ser executados de dentro dessa pasta, onde ficam as pastas `chbXX`.
+Os notebooks são independentes e numerados pela ordem dos experimentos. Os arquivos `modelo_*.pth` são usados pela cascata (notebook 13).
 
 ## Limitações
 
 - Os sinais são divididos em janelas e **as janelas são separadas aleatoriamente entre treino e teste**. Janelas da mesma gravação podem aparecer nos dois conjuntos, então os números podem ser otimistas e não são comparáveis a avaliações separadas por gravação ou por paciente.
-- O dataset de Bonn tem canal único e segmentos curtos, e é bem mais simples que registros clínicos contínuos. Por isso os resultados de Bonn e do CHB-MIT não são comparáveis diretamente.
-- No CHB-MIT foram usados apenas 7 a 8 pacientes e um único paciente de teste, então os números têm alta incerteza.
+- O dataset de Bonn tem canal único e segmentos curtos, e é bem mais simples que registros clínicos contínuos.
+
+
+## Projeto relacionado
+
+[`cnn-eeg-chbmit`](https://github.com/SBMurilo/cnn-eeg-chbmit): CNN 1D multicanal no CHB-MIT, avaliada em paciente nunca visto. Os resultados de lá (57% a 62%) mostram o quanto a divisão por paciente é mais exigente do que a divisão aleatória de janelas usada aqui.
 
 ## Tecnologias
 
-Python, PyTorch, MNE, NumPy, scikit-learn, Matplotlib, Jupyter, VHDL (exportação).
+Python, PyTorch, NumPy, scikit-learn, Matplotlib, Jupyter, VHDL (exportação).
