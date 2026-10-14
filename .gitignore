@@ -1,0 +1,9 @@
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+# Dataset de Bonn (baixar separadamente, ver README)
+/Z/
+/O/
+/N/
+/F/
+/S/
